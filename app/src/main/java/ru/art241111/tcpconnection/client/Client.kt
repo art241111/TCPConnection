@@ -1,8 +1,7 @@
 package ru.art241111.tcpconnection.client
 
-import android.app.Activity
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
-import ru.art241111.tcpconnection.MainActivity
 import ru.art241111.tcpconnection.client.connection.ConnectInt
 import ru.art241111.tcpconnection.client.connection.Connection
 import ru.art241111.tcpconnection.client.connection.Status
@@ -13,17 +12,24 @@ import ru.art241111.tcpconnection.client.writer.RemoteWriter
 import ru.art241111.tcpconnection.client.writer.RemoteWriterImp
 import ru.art241111.tcpconnection.client.writer.WriteImp
 import java.net.Socket
-import kotlin.concurrent.thread
 
-class Client(private val activity: Activity): ConnectInt, WriteImp{
+/**
+ * TCP client.
+ * @param lifecycleOwner - A class that has an Android lifecycle.
+ * @author Artem Gerasimov.
+ */
+class Client(private val lifecycleOwner: LifecycleOwner): ConnectInt, WriteImp{
     private val socketLiveData = Connection()
     private val remoteReader: RemoteReaderImp = RemoteReader()
     private val remoteWriter: RemoteWriterImp = RemoteWriter()
 
-    private val connectStatus: LiveData<Status> = socketLiveData.getConnectStatus()
-    override fun getConnectStatus(): LiveData<Status> = connectStatus
-
     private val handlers: MutableList<HandlerImp> = mutableListOf()
+
+    private val connectStatus: LiveData<Status> = socketLiveData.getConnectStatus()
+    /**
+     * @return connect status
+     */
+    override fun getConnectStatus(): LiveData<Status> = connectStatus
 
     @Suppress("unused")
     fun addHandlers(handlers: List<HandlerImp>) {
@@ -35,33 +41,43 @@ class Client(private val activity: Activity): ConnectInt, WriteImp{
         this.handlers.removeAll(handlers)
     }
 
+    /**
+     * Connect to TCP sever.
+     * @param address - server ip port,
+     * @param port - server port.
+     */
     override fun connect(address: String, port: Int){
+        // Connect to tcp server
         socketLiveData.connect(address, port)
 
-        connectStatus.observe(activity as MainActivity, {
+        // When the device connects to the server, it creates Reader and Writer
+        connectStatus.observe(lifecycleOwner, {
             if(it == Status.COMPLETED
                 && socketLiveData.value != null){
                 startReadingAndWriting(socket = socketLiveData.value!!)
             }
         })
 
+        // Add handlers to Reader
         remoteReader.addHandlers(handlers)
     }
 
+    /**
+     * Disconnect from TCP sever.
+     */
     override fun disconnect(){
-        thread {
-            remoteReader.stop()
-            remoteWriter.stop("EXIT")
+        remoteReader.stop()
+        remoteWriter.stop("EXIT")
 
-            Thread.sleep(50L)
-            socketLiveData.disconnect()
-        }
+        Thread.sleep(50L)
+        socketLiveData.disconnect()
     }
 
+    /**
+     * Send text to the server.
+     */
     override fun send(text: String) {
-        thread {
-            remoteWriter.send(text)
-        }
+        remoteWriter.send(text)
     }
 
     private fun startReadingAndWriting(socket: Socket) {

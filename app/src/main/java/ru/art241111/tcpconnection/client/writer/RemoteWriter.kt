@@ -8,14 +8,15 @@ import kotlin.concurrent.thread
 class RemoteWriter: RemoteWriterImp {
     private var isWriting = false
     private lateinit var writer: PrintWriter
-    private val commandsQueue: Queue<String> = LinkedList()
+    private val textQueue: Queue<String> = LinkedList()
 
     override fun send(text: String) {
-        commandsQueue.add(text)
+        textQueue.add(text)
     }
 
     override fun start(socket: Socket) {
-        writer = PrintWriter(socket.getOutputStream(), true);
+        textQueue.clear()
+        writer = PrintWriter(socket.getOutputStream(), true)
         isWriting = true
         queueHandler()
     }
@@ -27,14 +28,15 @@ class RemoteWriter: RemoteWriterImp {
             writer.close()
         }
 
+        textQueue.clear()
         isWriting = false
     }
 
     private fun queueHandler(){
         thread {
             while (isWriting){
-                if(commandsQueue.isNotEmpty()){
-                    val text = commandsQueue.poll()
+                if(textQueue.isNotEmpty()){
+                    val text = textQueue.poll()
                     if(text != null)
                         sendCommand(text)
                 }
