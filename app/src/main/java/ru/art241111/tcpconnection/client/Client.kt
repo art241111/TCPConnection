@@ -26,18 +26,8 @@ class Client(private val activity: Activity): ConnectInt, WriteImp{
     private val handlers: MutableList<HandlerImp> = mutableListOf()
 
     @Suppress("unused")
-    fun addHandler(handler: HandlerImp) {
-        handlers.add(handler)
-    }
-
-    @Suppress("unused")
     fun addHandlers(handlers: List<HandlerImp>) {
         this.handlers.addAll(handlers)
-    }
-
-    @Suppress("unused")
-    fun removeHandler(handler: HandlerImp) {
-        handlers.remove(handler)
     }
 
     @Suppress("unused")
