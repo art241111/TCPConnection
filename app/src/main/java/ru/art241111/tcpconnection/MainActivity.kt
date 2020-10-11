@@ -8,7 +8,7 @@ import ru.art241111.tcpconnection.client.Client
 
 class MainActivity : AppCompatActivity(){
     lateinit var client: Client
-    private val address = "192.168.56.1"
+    private val address = "192.168.31.62"
     private val port = 9999
 
     override fun onCreate(savedInstanceState: Bundle?) {
