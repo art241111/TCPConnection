@@ -2,6 +2,8 @@ package ru.art241111.tcpconnection.client
 
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.LiveData
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import ru.art241111.tcpconnection.client.connection.ConnectInt
 import ru.art241111.tcpconnection.client.connection.Connection
 import ru.art241111.tcpconnection.client.connection.Status
@@ -19,13 +21,13 @@ import java.net.Socket
  * @author Artem Gerasimov.
  */
 class Client(private val lifecycleOwner: LifecycleOwner): ConnectInt, WriteImp{
-    private val socketLiveData = Connection()
+    private val connection = Connection()
     private val remoteReader: RemoteReaderImp = RemoteReader()
     private val remoteWriter: RemoteWriterImp = RemoteWriter()
 
     private val handlers: MutableList<HandlerImp> = mutableListOf()
 
-    private val connectStatus: LiveData<Status> = socketLiveData.getConnectStatus()
+    private val connectStatus: LiveData<Status> = connection.getConnectStatus()
     /**
      * @return connect status
      */
@@ -47,19 +49,18 @@ class Client(private val lifecycleOwner: LifecycleOwner): ConnectInt, WriteImp{
      * @param port - server port.
      */
     override fun connect(address: String, port: Int){
-        // Connect to tcp server
-        socketLiveData.connect(address, port)
+        GlobalScope.launch {
+            // Connect to tcp server
+            connection.connect(address, port)
 
-        // When the device connects to the server, it creates Reader and Writer
-        connectStatus.observe(lifecycleOwner, {
-            if(it == Status.COMPLETED
-                && socketLiveData.value != null){
-                startReadingAndWriting(socket = socketLiveData.value!!)
+            // When the device connects to the server, it creates Reader and Writer
+            if(connection.value != null && connection.value!!.isConnected){
+                startReadingAndWriting(socket = connection.value!!)
+
+                // Add handlers to Reader
+                remoteReader.addHandlers(handlers)
             }
-        })
-
-        // Add handlers to Reader
-        remoteReader.addHandlers(handlers)
+        }
     }
 
     /**
@@ -70,7 +71,7 @@ class Client(private val lifecycleOwner: LifecycleOwner): ConnectInt, WriteImp{
         remoteWriter.stop("EXIT")
 
         Thread.sleep(50L)
-        socketLiveData.disconnect()
+        connection.disconnect()
     }
 
     /**

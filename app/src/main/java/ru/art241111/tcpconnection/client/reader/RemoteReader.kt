@@ -1,6 +1,8 @@
 package ru.art241111.tcpconnection.client.reader
 
 import android.util.Log
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import ru.art241111.tcpconnection.client.reader.handlers.HandlerImp
 import java.io.BufferedReader
 import java.lang.Exception
@@ -25,7 +27,7 @@ class RemoteReader: RemoteReaderImp {
         handlers.clear()
 
         if(::reader.isInitialized && isReading){
-            thread {
+            GlobalScope.launch {
                 reader.close()
             }
         }
@@ -38,7 +40,7 @@ class RemoteReader: RemoteReaderImp {
         reader = socket.getInputStream().bufferedReader()
         isReading = true
 
-        thread {
+        GlobalScope.launch {
             startTrackingInputString(reader)
         }
     }
