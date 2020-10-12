@@ -4,8 +4,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.PrintWriter
 import java.net.Socket
-import java.util.*
-import kotlin.concurrent.thread
 
 class RemoteWriter: RemoteWriterImp {
     private var isWriting = false

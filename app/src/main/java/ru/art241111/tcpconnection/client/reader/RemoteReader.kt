@@ -1,13 +1,13 @@
 package ru.art241111.tcpconnection.client.reader
 
 import android.util.Log
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import ru.art241111.tcpconnection.client.reader.handlers.HandlerImp
 import java.io.BufferedReader
 import java.lang.Exception
 import java.net.Socket
-import kotlin.concurrent.thread
 
 class RemoteReader: RemoteReaderImp {
     private val handlers: MutableList<HandlerImp> = mutableListOf()
@@ -27,7 +27,7 @@ class RemoteReader: RemoteReaderImp {
         handlers.clear()
 
         if(::reader.isInitialized && isReading){
-            GlobalScope.launch {
+            GlobalScope.launch(Dispatchers.IO) {
                 reader.close()
             }
         }
